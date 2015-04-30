@@ -91,9 +91,7 @@ console.log(entity.get('state'));   // State.CLOSED
 Checking if transition is conform afterwards (ie, for server-side validation of client-side state change before persistence).
 0 and 1-hop state transitions are valid.
 
-```
-/* global db, request */
-
+```javascript
 const ourEntity = db.find('MyEntity', request.params.id);
 const theirEntity = new MyEntity(newrequest.params.entity);    // Object decoded from JSON payload, for instance
 
