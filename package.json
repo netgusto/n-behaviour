@@ -1,0 +1,28 @@
+{
+  "name": "n-behaviour",
+  "version": "1.0.0",
+  "description": "Finite State Machine / Behaviour management for nodejs and the browser",
+  "main": "dist/behaviour.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/netgusto/n-behaviour"
+  },
+  "author": "Net Gusto / Jérôme Schneider (http://netgusto.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/netgusto/n-behaviour/issues"
+  },
+  "homepage": "https://github.com/netgusto/n-behaviour",
+  "dependencies": {
+    "graphlib": "cpettitt/graphlib"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-babel": "^5.0.0",
+    "grunt-cli": "^0.1.13",
+    "load-grunt-tasks": "^3.1.0"
+  }
+}
