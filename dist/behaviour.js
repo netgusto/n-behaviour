@@ -1,16 +1,20 @@
 'use strict';
 
-var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } };
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
 Object.defineProperty(exports, '__esModule', {
     value: true
 });
 
-var _Graph$GraphAlgo = require('graphlib');
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-'use strict';
+var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; }
+
+var _events = require('events');
+
+var _graphlib = require('graphlib');
 
 var normalizeAction = function normalizeAction(action) {
     var nextState = undefined;
@@ -38,13 +42,15 @@ var normalizeAction = function normalizeAction(action) {
     return { nextState: nextState, apply: apply, check: check };
 };
 
-var BaseFSM = (function () {
+var BaseFSM = (function (_EventEmitter) {
     function BaseFSM(_ref) {
         var getState = _ref.getState;
         var setState = _ref.setState;
         var states = _ref.states;
 
         _classCallCheck(this, BaseFSM);
+
+        _get(Object.getPrototypeOf(BaseFSM.prototype), 'constructor', this).call(this);
 
         this.getState = getState;
         this.setState = setState;
@@ -63,7 +69,7 @@ var BaseFSM = (function () {
         }
 
         // Building directed graph of states
-        var g = new _Graph$GraphAlgo.Graph();
+        var g = new _graphlib.Graph();
         for (var state in this.statesNormalized) {
             g.setNode(state);
         }
@@ -79,7 +85,7 @@ var BaseFSM = (function () {
         }
 
         // Calculating shortest pathes between states
-        var stateDistances = _Graph$GraphAlgo.alg.floydWarshall(g);
+        var stateDistances = _graphlib.alg.floydWarshall(g);
         this.getTransitionsBetween = function (from, to) {
 
             var transitions = [];
@@ -112,6 +118,8 @@ var BaseFSM = (function () {
         */
     }
 
+    _inherits(BaseFSM, _EventEmitter);
+
     _createClass(BaseFSM, [{
         key: 'getActionForState',
         value: function getActionForState(state, actionName) {
@@ -130,10 +138,18 @@ var BaseFSM = (function () {
             var state = this.getState(data);
             var action = this.getActionForState(state, method);
             if (action === null) {
-                return data;
+                return Promise.resolve(data);
             }
+
+            this.emit('handleBegin', { method: method, data: data, args: extraargs, action: action, state: state });
+
             data = action.apply.apply(action, [data].concat(extraargs));
-            return this.setState(data, action.nextState);
+            var nextdata = this.setState(data, action.nextState);
+
+            this.emit('handle', { method: method, data: data, args: extraargs, action: action, nextdata: nextdata, state: state, nextstate: action.nextState });
+
+            console.log('Promise:fulfilled');
+            return Promise.resolve(nextdata);
         }
     }, {
         key: 'check',
@@ -176,7 +192,7 @@ var BaseFSM = (function () {
     }]);
 
     return BaseFSM;
-})();
+})(_events.EventEmitter);
 
 exports['default'] = BaseFSM;
 module.exports = exports['default'];

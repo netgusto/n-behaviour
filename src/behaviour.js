@@ -1,5 +1,6 @@
 'use strict';
 
+import { EventEmitter } from 'events';
 import { Graph, alg as GraphAlgo } from 'graphlib';
 
 const normalizeAction = (action) => {
@@ -20,9 +21,10 @@ const normalizeAction = (action) => {
     return { nextState, apply, check };
 };
 
-export default class BaseFSM {
+export default class BaseFSM extends EventEmitter {
 
     constructor({ getState, setState, states }) {
+        super();
 
         this.getState = getState;
         this.setState = setState;
@@ -92,11 +94,19 @@ export default class BaseFSM {
     }
 
     handle(method, data, ...extraargs) {
+
         const state = this.getState(data);
         const action = this.getActionForState(state, method);
-        if(action === null) { return data; }
+        if(action === null) { return Promise.resolve(data); }
+
+        this.emit('handleBegin', { method, data, args: extraargs, action, state });
+
         data = action.apply(data, ...extraargs);
-        return this.setState(data, action.nextState);
+        const nextdata = this.setState(data, action.nextState);
+
+        this.emit('handle', { method, data, args: extraargs, action, nextdata, state, nextstate: action.nextState });
+
+        return Promise.resolve(nextdata);
     }
 
     check(origData, targetData) {
